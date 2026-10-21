@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intervew_task/features/auth/presentation/bloc/auth_bloc.dart';
 
 import 'core/network/api_client.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
-import 'features/auth/presentation/providers/auth_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,10 +15,10 @@ void main() {
   final authRemoteDataSource = AuthRemoteDataSourceImpl(apiClient);
 
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(authRemoteDataSource: authRemoteDataSource),
+        BlocProvider(
+          create: (_) => AuthBloc(authRemoteDataSource: authRemoteDataSource),
         ),
       ],
       child: const MyApp(),

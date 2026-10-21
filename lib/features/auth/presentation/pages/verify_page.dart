@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:intervew_task/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:intervew_task/features/auth/presentation/bloc/auth_event.dart';
+import 'package:intervew_task/features/auth/presentation/bloc/auth_state.dart';
+
 import '../../../../core/theme/app_theme.dart';
-import '../providers/auth_provider.dart';
 
 class VerifyPage extends StatefulWidget {
   final String email;
+
   const VerifyPage({super.key, required this.email});
 
   @override
@@ -14,7 +18,10 @@ class VerifyPage extends StatefulWidget {
 }
 
 class _VerifyPageState extends State<VerifyPage> {
-  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    4,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   @override
@@ -42,25 +49,13 @@ class _VerifyPageState extends State<VerifyPage> {
     }
   }
 
-  Future<void> _handleVerify() async {
+  void _handleVerify() {
     final code = _controllers.map((c) => c.text).join();
     if (code.length < 4) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.verifyOtp(widget.email, code);
-
-    if (!mounted) return;
-
-    if (success) {
-      context.go('/success');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Verification failed'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+    context.read<AuthBloc>().add(
+      VerifyOtpRequested(email: widget.email, code: code),
+    );
   }
 
   @override
@@ -77,7 +72,11 @@ class _VerifyPageState extends State<VerifyPage> {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary, size: 20),
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: AppColors.textPrimary,
+                  size: 20,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -92,12 +91,20 @@ class _VerifyPageState extends State<VerifyPage> {
               const SizedBox(height: AppSpacing.xs),
               RichText(
                 text: TextSpan(
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
                   children: [
-                    const TextSpan(text: "We've sent a 4-digit verification code to "),
+                    const TextSpan(
+                      text: "We've sent a 4-digit verification code to ",
+                    ),
                     TextSpan(
                       text: widget.email,
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -132,7 +139,10 @@ class _VerifyPageState extends State<VerifyPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.md),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
                         ),
                       ),
                       onChanged: (value) => _onOtpDigitChanged(index, value),
@@ -143,31 +153,57 @@ class _VerifyPageState extends State<VerifyPage> {
               const SizedBox(height: AppSpacing.xl),
 
               // Verify Button
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
+              BlocConsumer<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is AuthAuthenticated) {
+                    context.go('/success');
+                  } else if (state is AuthFailure) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.errorMessage),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  final isLoading = state is AuthLoading;
                   return ElevatedButton(
-                    onPressed: authProvider.isLoading ? null : _handleVerify,
-                    child: authProvider.isLoading
+                    onPressed: isLoading ? null : _handleVerify,
+                    child: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2,
+                            ),
                           )
-                        : const Text('Verify'),
+                        : Text("Verify"),
                   );
                 },
               ),
               const SizedBox(height: AppSpacing.lg),
 
               // Timer / Resend Code
-              Center(
+              const Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text("Didn't receive code? ", style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                  children: [
+                    Text(
+                      "Didn't receive code? ",
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
                     Text(
                       'Resend in 00:30',
-                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
