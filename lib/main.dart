@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intervew_task/core/services/location_service.dart';
 import 'package:intervew_task/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:intervew_task/features/home/presentation/bloc/location_bloc.dart';
 
 import 'core/network/api_client.dart';
 import 'core/routing/app_router.dart';
@@ -13,12 +15,16 @@ void main() {
   // Initialize Network & Data Sources
   final apiClient = ApiClient();
   final authRemoteDataSource = AuthRemoteDataSourceImpl(apiClient);
+  final locationService = LocationService();
 
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (_) => AuthBloc(authRemoteDataSource: authRemoteDataSource),
+        ),
+        BlocProvider(
+          create: (_) => LocationBloc(locationService: locationService),
         ),
       ],
       child: const MyApp(),
