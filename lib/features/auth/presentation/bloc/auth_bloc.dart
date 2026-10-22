@@ -1,13 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intervew_task/core/network/api_client.dart';
 import 'package:intervew_task/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:intervew_task/features/auth/presentation/bloc/auth_event.dart';
 import 'package:intervew_task/features/auth/presentation/bloc/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState>{
   final AuthRemoteDataSource authRemoteDataSource;
+  final ApiClient apiClient;
 
-  AuthBloc({required this.authRemoteDataSource}): super(AuthInitial()) {
+  AuthBloc({
+    required this.authRemoteDataSource,
+    required this.apiClient,
+  }): super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<VerifyOtpRequested>(_onVerifyOtpRequested);
@@ -18,7 +23,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>{
     emit(AuthLoading());
     try {
       final res = await authRemoteDataSource.login(event.email, event.password);
-      final token = res['token']?.toString();
+      // Extract the access token from data.access per the sample response
+      final token = res['data']?['access']?.toString();
+      if (token != null) {
+        apiClient.setAuthToken(token);
+      }
       emit(AuthAuthenticated(token: token));
     } on DioException catch (e) {
       final message = _extractErrorMessage(e.response?.data, 'Login failed. Please check your credentials');
@@ -42,6 +51,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>{
   }
 
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+    apiClient.clearAuthToken();
     emit(AuthUnauthenticated());
   }
 
@@ -49,7 +59,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>{
     emit(AuthLoading());
     try {
       final res = await authRemoteDataSource.verifyOtp(event.email, event.code);
-      final token = res['token']?.toString();
+      // Assuming verifyOtp follows the same response structure (data.access)
+      final token = res['data']?['access']?.toString();
+      if (token != null) {
+        apiClient.setAuthToken(token);
+      }
       emit(AuthAuthenticated(token: token, message: 'OTP Verified successfully'));
     } on DioException catch (e) {
       final message = _extractErrorMessage(e.response?.data, 'Invalid verification code');

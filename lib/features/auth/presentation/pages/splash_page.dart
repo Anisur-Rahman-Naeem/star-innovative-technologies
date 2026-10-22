@@ -1,72 +1,174 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 
-class SplashPage extends StatelessWidget {
+class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOutBack),
+    ));
+
+    _controller.forward();
+
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        context.go('/onboard');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              // App Logo Placeholder (Moon icon / illustration)
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: const Icon(Icons.nightlight_round, size: 40, color: Colors.black),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'DEEN-STEP',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Every step counts. Track your habit, build consistency, elevate your spiritual journey.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-              ),
-              const Spacer(),
-              // Action Buttons matching Figma
-              ElevatedButton(
-                onPressed: () => context.push('/register'),
-                child: const Text('Create Account'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  side: const BorderSide(color: AppColors.border),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                ),
-                onPressed: () => context.push('/login'),
-                child: const Text('Already registered? Log In', style: TextStyle(color: AppColors.textPrimary)),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextButton(
-                onPressed: () => context.go('/home'),
-                child: const Text('Continue as Guest', style: TextStyle(color: AppColors.textSecondary)),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // 1. Starry Background
+          const StarryBackground(),
+
+          // 2. Mosque Silhouette at the bottom
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: const MosqueSilhouette(),
+            ),
           ),
-        ),
+
+          // 3. Central Animated Content
+          Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // App Logo
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.nightlight_round,
+                        size: 42,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // App Name
+                    const Text(
+                      'DEEN-STEP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Tagline
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        'Every step counts. Track your habit, build consistency, elevate your spiritual journey.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class StarryBackground extends StatelessWidget {
+  const StarryBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final random = Random();
+    return Stack(
+      children: List.generate(40, (index) {
+        return Positioned(
+          top: random.nextDouble() * MediaQuery.of(context).size.height * 0.8,
+          left: random.nextDouble() * MediaQuery.of(context).size.width,
+          child: Container(
+            width: random.nextDouble() * 2 + 1,
+            height: random.nextDouble() * 2 + 1,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(random.nextDouble() * 0.6 + 0.2),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class MosqueSilhouette extends StatelessWidget {
+  const MosqueSilhouette({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/mosque.png',
+      width: double.infinity,
+      fit: BoxFit.fitWidth,
+      alignment: Alignment.bottomCenter,
     );
   }
 }

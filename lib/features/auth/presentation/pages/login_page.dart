@@ -232,10 +232,76 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.xl),
+
+                // Social Login Section
+                const Row(
+                  children: [
+                    Expanded(child: Divider(color: AppColors.border)),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: AppColors.border)),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const Center(
+                  child: Text(
+                    'Log In With',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _socialButton(
+                      'assets/images/google.png',
+                      Colors.white,
+                      isGoogle: true,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    _socialButton(
+                      'assets/images/apple.png',
+                      AppColors.surface,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _socialButton(String assetPath, Color bgColor, {bool isGoogle = false}) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Center(
+        child: isGoogle
+            ? const Text(
+                'G',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue, // Placeholder for actual icon
+                ),
+              )
+            : const Icon(Icons.apple, color: Colors.white, size: 30),
       ),
     );
   }
