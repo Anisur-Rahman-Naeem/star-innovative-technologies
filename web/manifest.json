@@ -1,6 +1,6 @@
 {
-    "name": "intervew_task",
-    "short_name": "intervew_task",
+    "name": "interview_task",
+    "short_name": "interview_task",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

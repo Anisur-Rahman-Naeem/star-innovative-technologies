@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intervew_task/core/services/location_service.dart';
 import 'package:intervew_task/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:intervew_task/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:intervew_task/features/home/data/repositories/home_repository_impl.dart';
+import 'package:intervew_task/features/home/presentation/bloc/home_bloc.dart';
 import 'package:intervew_task/features/home/presentation/bloc/location_bloc.dart';
 
 import 'core/network/api_client.dart';
@@ -16,15 +19,26 @@ void main() {
   final apiClient = ApiClient();
   final authRemoteDataSource = AuthRemoteDataSourceImpl(apiClient);
   final locationService = LocationService();
+  final homeRemoteDataSource = HomeRemoteDataSourceImpl(apiClient);
+  final homeRepository = HomeRepositoryImpl(remoteDataSource: homeRemoteDataSource);
 
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => AuthBloc(authRemoteDataSource: authRemoteDataSource),
+          create: (_) => AuthBloc(
+            authRemoteDataSource: authRemoteDataSource,
+            apiClient: apiClient,
+          ),
         ),
         BlocProvider(
-          create: (_) => LocationBloc(locationService: locationService),
+          create: (_) => LocationBloc(
+            locationService: locationService,
+            homeRepository: homeRepository,
+          ),
+        ),
+        BlocProvider(
+          create: (_) => HomeBloc(homeRepository: homeRepository),
         ),
       ],
       child: const MyApp(),
